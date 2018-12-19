@@ -168,8 +168,7 @@ For example:
 
     (setq hs-default-project-file-basename-regex (rx \"cabal\" ?- (eval (user-login-name))))
 
-    ;; ^ Matches a contributor-specific project file, like « cabal-sboo.project ».
-"
+    ;; ^ Matches a contributor-specific project file, like « cabal-sboo.project »."
 
   :group 'hs
   :type '(choice (const nil) string))
@@ -269,7 +268,9 @@ MUST be visible to `executable-find'."
 
 (defun hs--run-ghc (&rest arguments)
 
-  ""
+  "Shell out to ‹ghc›.
+
+Optional argument ARGUMENTS: other ‘command-line’ options and/or arguments (will be passed through verbatim)."
 
   ())
 
@@ -279,7 +280,9 @@ MUST be visible to `executable-find'."
 
 (defun hs--run-cabal (&rest arguments)
 
-  ""
+  "Shell out to ‹cabal›.
+
+Optional argument ARGUMENTS: other ‘command-line’ options and/or arguments (will be passed through verbatim)."
 
   ())
 
@@ -289,7 +292,7 @@ MUST be visible to `executable-find'."
 
 (defun hs--pvp-version-to-plist (VERSION-STRING)
 
-  "
+  "Parse a `VERSION-STRING' into the PVP version format.
 
 Arguments:
 
@@ -329,7 +332,7 @@ See URL `https://pvp.haskell.org/'."
 
 (defun hs--ghc-version ()
 
-  ""
+  "Get the version of the (available) ‹ghc› program."
 
   (hs--run-ghc "--numeric-version"))
 
@@ -346,7 +349,7 @@ See URL `https://pvp.haskell.org/'."
 
 (defun hs--cabal-version ()
 
-  ""
+  "Get the version of the (available) ‹cabal› program."
 
   (hs--run-cabal "--numeric-version")
 
