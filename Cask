@@ -3,3 +3,5 @@
 
 (package-file "hs.el")
 
+(development
+ (depends-on "ert-runner"))

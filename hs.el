@@ -9,7 +9,7 @@
 ;; Copyright © 2007 Stefan Monnier
 
 ;; Version: 0.0
-;; URL: https://github.com/sboosali/hs.el
+;; Homepage: https://github.com/sboosali/hs.el
 ;; Author: Spiros Boosalis <samboosalis@gmail.com>
 ;; Maintainer: Spiros Boosalis <samboosalis@gmail.com>
 ;; Created: January 2019
@@ -42,7 +42,7 @@
 ;; Develop Cabal projects, supporting « cabal new-* » and « cabal.project ».
 ;;
 ;; Switch easily between components (e.g. « lib », « test », « exe », « bench », « test:_:unit », « test:_:doc », etc) and between compiler versions (e.g. « ghc-8.6.3 », « ghc-7.10.3 », etc)
-;; and flavors (e.g. « ghc » and « ghcjs »). The target is inferred by parsing the project file
+;; and flavors (e.g. « ghc » and « ghcjs »).  The target is inferred by parsing the project file
 ;; or cabal file (in particular, for « hs-source-dirs »),
 ;; and by heurists of ancestor directories (e.g. « src/**/*.hs » and « sources/**/*.hs » default to « lib », while « test/**/*.hs » and « tests/**/*.hs » default to « test »).
 ;;
@@ -58,13 +58,14 @@
 
 
 ;;----------------------------------------------;;
-;;; Imports
+;;; Imports ------------------------------------;;
 ;;----------------------------------------------;;
 
 ;;----------------------------------------------;;
 ;; Builtin Features:
 
 (require 'cl-lib)
+;;TODO (require 'version)
 (require 'compile)
 ;; (require 'thingatpt)
 ;; (require 'flymake)
@@ -80,7 +81,71 @@
 
 
 ;;----------------------------------------------;;
-;;; Customization
+;;; Constants ----------------------------------;;
+;;----------------------------------------------;;
+
+(defvar hs-versioned-compiler-project-file-regex
+
+  (rx "cabal"
+      "-"
+      "ghc"
+      (? "js")
+      (? "-"
+         (1+ digit)
+         (repeat 0 2
+                 "."
+                 (1+ digit))))
+
+  "Regular expression which (optionally) matches a compiler flavor and/or compiler version.
+
+Matches: \"cabal-ghcjs\", \"cabal-ghcjs-7\", \"cabal-ghc-7.10\", \"cabal-ghc-8.6.3\".")
+
+;;----------------------------------------------;;
+
+(defconst hs--minimal-ghc-version "7.10")
+
+;;----------------------------------------------;;
+
+(defconst hs--minimal-cabal-version "2.0.0.0")
+
+;;----------------------------------------------;;
+
+(defconst hs--minimal-emacs-version "26.1")
+
+;;----------------------------------------------;;
+
+
+
+
+
+
+
+
+;;----------------------------------------------;;
+;;; Variables ----------------------------------;;
+;;----------------------------------------------;;
+
+
+;;----------------------------------------------;;
+
+
+;;----------------------------------------------;;
+
+
+;;----------------------------------------------;;
+
+
+;;----------------------------------------------;;
+
+
+
+
+
+
+
+
+;;----------------------------------------------;;
+;;; Customization ------------------------------;;
 ;;----------------------------------------------;;
 
 (defgroup hs nil
@@ -93,7 +158,6 @@
   ;;TODO :link '(url-link :tag "Online Manual" "https://docs.hs.io/")
   :link '(emacs-commentary-link :tag "Commentary" "hs"))
 
-
 ;;----------------------------------------------;;
 
 (defcustom hs-default-project-file-basename-regex nil
@@ -116,14 +180,192 @@ For example:
 
 ;;(rx "cabal" ?- (eval (user-login-name)))
 
+;;----------------------------------------------;;
+
+(defcustom hs-project-file-basename-list
+
+  (list "cabal-ghc-7.10.3"
+        "cabal-ghc-8.0.2"
+        "cabal-ghc-8.2.2"
+        "cabal-ghc-8.4.4"
+        "cabal-ghc-8.6.3"
+        ;; "cabal-"
+        ;; "cabal-"
+        ;; "cabal-"
+        ;; "cabal-"
+        ;; "cabal-"
+        ;; "cabal-"
+        "cabal-ghcjs"
+        "cabal")
+
+  "Regular expression which matches the basename of a « .project » file.
+
+For example:
+
+    (setq hs-default-project-file-basename-regex (rx \"cabal\" ?- (eval (user-login-name))))
+
+    ;; ^ Matches a contributor-specific project file, like « cabal-sboo.project »."
+
+  :group 'hs
+  :type '(list string))
+
+;;TODO list-of-string (put 'hs-project-file-basename-list 'safe-local-variable #'stringp)
+
+;;----------------------------------------------;;
+
+(defcustom hs-ghc-program "ghc"
+
+  "Which « ghc » program should `hs' invoke?
+
+Can be a relative filepath (like the default,
+which is just the command name),
+or an absolute filepath
+\(useful to pin a development version,
+or if Emacs's PATH environment variables is corrupt).
+
+MUST be visible to `executable-find'."
+
+  :group 'hs
+  :type 'string)
+
+(put 'hs-ghc-program 'safe-local-variable #'stringp)
+
+;;----------------------------------------------;;
+
+(defcustom hs-cabal-program "cabal"
+
+  "Which « cabal » program should `hs' invoke?
+
+Can be a relative filepath (like the default,
+which is just the command name),
+or an absolute filepath
+\(useful to pin a development version,
+or if Emacs's PATH environment variables is corrupt).
+
+MUST be visible to `executable-find'."
+
+  :group 'hs
+  :type 'string)
+
+(put 'hs-cabal-program 'safe-local-variable #'stringp)
+
+;;----------------------------------------------;;
+
+
+
+
+
+
+
+
+;;----------------------------------------------;;
+
 
 ;;----------------------------------------------;;
-;;; Utilities
+;;; Utilities (Private API) --------------------;;
+;;----------------------------------------------;;
+
+;;----------------------------------------------;;
+
+(defun hs--run-ghc (&rest arguments)
+
+  ""
+
+  ())
+
+;; ^
+
+;;----------------------------------------------;;
+
+(defun hs--run-cabal (&rest arguments)
+
+  ""
+
+  ())
+
+;; ^
+
+;;----------------------------------------------;;
+
+(defun hs--pvp-version-to-plist (VERSION-STRING)
+
+  "
+
+Arguments:
+
+- `VERSION-STRING' must be parseable by `version-to-list'.
+
+In the Package Versioning Policy (PVP):
+
+A.B is known as the major version number, and C the minor version number.
+
+A package version number SHOULD have the form A.B.C, and MAY optionally have any number of additional components, for example 2.1.0.4 (in this case, A=2, B=1, C=0).
+
+See URL `https://pvp.haskell.org/'."
+
+  (let ((VERSION-LIST (version-to-list VERSION-STRING))
+        )
+
+    (pcase VERSION-TO-LIST
+
+      (a b c)
+
+      ()
+
+      ()
+
+      )))
+
+;; e.g.
+;;
+;;    M-: (version-to-list "2.4.1.0")
+;;     ⤷ (2 4 1 0)
+;;
+;;    M-: (hs--pvp-version-to-plist "2.4.1.0")
+;;     ⤷ (:major (2 4) :minor 4 :patch 0)
+;;
+
+;;----------------------------------------------;;
+
+(defun hs--ghc-version ()
+
+  ""
+
+  (hs--run-ghc "--numeric-version"))
+
+;; ^ e.g.
+;;
+;;    $ ghc --numeric-version
+;;    8.6.3
+
+;;
+;;    $ ghc --version
+;;    The Glorious Glasgow Haskell Compilation System, version 8.6.3
+
+;;----------------------------------------------;;
+
+(defun hs--cabal-version ()
+
+  ""
+
+  (hs--run-cabal "--numeric-version")
+
+)
+
+;; ^ e.g.
+;;
+;;    $ cabal --numeric-version
+;;    2.4.1.0
+;;
+;;    $ cabal --version
+;;    cabal-install version 2.4.1.0
+;;    compiled using version 2.4.1.0 of the Cabal library
+
 ;;----------------------------------------------;;
 
 (defun hs--project-file-filename-regex (&optional BASENAME)
 
-  "Regular expression which matches the entirety of the filename of a « .project » file.
+  "Regular expression which matches the entirety of the filename of a “.project” file.
 
 For example:
 
@@ -161,7 +403,7 @@ depending on whether the relevant variables are provided / customized."
 Arguments:
 
 * DIRECTORY defaults to `default-directory'
-* BASENAME is given to `hs--project-file-filename-regex' 
+* BASENAME is given to `hs--project-file-filename-regex'
 
 See:
 
@@ -215,6 +457,19 @@ For example:
 
 ;;----------------------------------------------;;
 
+(cl-defun hs--probe-project-file (&key directory basename)
+
+  "Probe DIRECTORY for “BASENAME.project”."
+
+    (let* (()
+          )
+
+  ())
+
+; isDrive dir || dir == homedir
+
+;;----------------------------------------------;;
+
 (cl-defun hs--find-dominating-package-description (&key directory basename)
 
   "Find a package description file in the directory DIR.
@@ -236,10 +491,84 @@ a list is returned instead of failing with a nil result."
      (allow-multiple cabal-files) ;; pass-thru multiple candidates
      (t nil))))
 
+
+
+
+
+
 
+;;----------------------------------------------;;
+;;; Commands (and Public API) ------------------;;
+;;----------------------------------------------;;
+
+(cl-defun hs-find-project-file (&key directory basename)
+
+  "Find a Cabal project file.
+
+Find a file:
+
+* with a “.project” extension,
+* whose basename matches BASENAME,
+* which is an ancestor of DIRECTORY.
+
+We try `hs--find-dominating-project-file':
+
+* returning it (i.e. `hs--find-dominating-project-file') if successful (i.e. non-nil);
+* returning « `directory'/`basename'.project » if « `directory'/`basename'.project » exists
+* failing otherwise (i.e. returning nil).
+
+Examples:
+
+    M-: (hs-find-project-file :directory `default-directory' :basename (rx \"cabal\" ?- \"ghc\" (zero-or-one \"js\") ?- (one-or-more digit) (repeat 0 3 ?. (one-or-more digit))))
+   (\"cabal-ghc-8.4\" \"cabal-ghc-8.6.3\" \"cabal-ghcjs\")
+
+Also see URL `http://hackage.haskell.org/package/filepath-1.4.2.1/src/System/FilePath/Internal.hs'."
+
+  (interactive (list
+                (read-directory-name "Directory to start the search from (default 'default-directory): ")
+                (completing-read "Basename of the “.project” file (default “cabal”): " hs-project-file-basename-list)))
+
+  (or (hs--find-dominating-project-file directory basename)
+      ()
+      nil))
+
+;TODO \"cabal-ghcjs-[[:digit:]]+\\\\.[[:digit:]]+\\\\.[[:digit:]]+\")
+
+;;----------------------------------------------;;
+
+;;----------------------------------------------;;
+;;; Functions (Public API)
+;;----------------------------------------------;;
+
+
+;; (when (version< emacs-version hs--minimal-emacs-version)
+;;   ())
+
+;; (when (version< (hs--ghc-version) hs--minimal-ghc-version)
+;;   ())
+
+;; (when (version< (hs--cabal-version) hs--minimal-cabal-version)
+;;   ())
+
+
+
+;;----------------------------------------------;;
+;;; Filesystem ---------------------------------;;
+;;----------------------------------------------;;
+
+
+
+
+;;----------------------------------------------;;
+;;; Loading Libraries --------------------------;;
 ;;----------------------------------------------;;
 
 (provide 'hs)
+
+;; (eval-after-load 'bookmark
+;;   '(require 'hs-bookmark))
+
+;; (add-hook 'after-init-hook #'hs-startup-asserts t)
 
 ;;----------------------------------------------;;
 ;; Notes ---------------------------------------;;
@@ -249,7 +578,37 @@ a list is returned instead of failing with a nil result."
 ;;                 -> Maybe FilePath   -- ^ @cabal.project@ file name override
 ;;                 -> IO (Either BadProjectRoot ProjectRoot)
 
+;;----------------------------------------------;;
+
+;; e.g. `version-to-list'
+;;
+;; M-: (version-to-list "8.6.3")
+;;     (8 6 3)
+;;
+;; M-: (version-to-list "2.4.1.0")
+;;     (2 4 1 0)
+;;
+;; M-: (version-to-list "2.4.1.0-pre")
+;;     (2 4 1 0 -1)
+;;
+
+;;----------------------------------------------;;
+
+;; PVP...
+
+;; > A package version number SHOULD have the form A.B.C, and MAY optionally have any number of additional components, for example 2.1.0.4 (in this case, A=2, B=1, C=0). This policy defines the meaning of the first three components A-C, the other components can be used in any way the package maintainer sees fit.
+;; >
+;; > Version number ordering is already defined by Cabal as the lexicographic ordering of the components. For example, 2.0.1 > 1.3.2, and 2.0.1.0 > 2.0.1.
+;; >
+;; > A.B is known as the major version number, and C the minor version number.
+
+;;----------------------------------------------;;
+
+
 
 
 ;;----------------------------------------------;;
 ;;; dante.el ends here
+(provide 'hs)
+
+;;; hs.el ends here
