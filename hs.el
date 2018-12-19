@@ -119,6 +119,27 @@ Matches: \"cabal-ghcjs\", \"cabal-ghcjs-7\", \"cabal-ghc-7.10\", \"cabal-ghc-8.6
 
 
 
+
+;;----------------------------------------------;;
+;;; Types --------------------------------------;;
+;;----------------------------------------------;;
+
+(cl-defstruct hs-pvp-version
+  (a 0   :read-only t)                  ; « a :: Int »
+  (b 0   :read-only t)                  ; « b :: Int »
+  (c 0   :read-only t)                  ; « c :: Int »
+  (d nil :read-only t)                  ; « d :: [Int] »
+  )
+
+;;----------------------------------------------;;
+
+
+;;----------------------------------------------;;
+
+
+
+
+
 
 
 ;;----------------------------------------------;;
@@ -298,26 +319,50 @@ Arguments:
 
 - `VERSION-STRING' must be parseable by `version-to-list'.
 
-In the Package Versioning Policy (PVP):
+Returns:
 
-A.B is known as the major version number, and C the minor version number.
+- A `hs-pvp-version' upon success.
+- `nil' upon failure.
 
-A package version number SHOULD have the form A.B.C, and MAY optionally have any number of additional components, for example 2.1.0.4 (in this case, A=2, B=1, C=0).
+Examples:
+
+    M-: (hs--pvp-version-to-plist \"2.4.1.0\")
+     ⤷ (:a 2 :b 4 :c 4 :d (0))
+
+NOTE the Package Versioning Policy (PVP) states:
+
+- A.B is known as the major version number, and C the minor version number.
+- A package version number SHOULD have the form A.B.C, and MAY optionally have any number of additional components, for example 2.1.0.4 (in this case, A=2, B=1, C=0).
 
 See URL `https://pvp.haskell.org/'."
 
-  (let ((VERSION-LIST (version-to-list VERSION-STRING))
-        )
+    (pcase (version-to-list VERSION-STRING)
 
-    (pcase VERSION-TO-LIST
+      (`(,a ,b ,c)
 
-      (a b c)
+       (make-hs-pvp-version :a a
+                            :b b
+                            :c c))
 
-      ()
+      (`(,a ,b ,c ,d)
 
-      ()
+         (make-hs-pvp-version
+          :a a
+          :b b
+          :c c
+          :d `(,d)))
 
-      )))
+      (`(,a ,b ,c ,d ,e)
+
+         (make-hs-pvp-version
+          :a a
+          :b b
+          :c c
+          :d `(,d ,e)))
+
+      (_ nil)
+
+      ))
 
 ;; e.g.
 ;;
@@ -401,7 +446,7 @@ depending on whether the relevant variables are provided / customized."
 
 (cl-defun hs--find-dominating-project-file (&key directory basename)
 
-  "
+  "Find the nearest « `BASENAME'.project » file that is an ancestor of `DIRECTORY'.
 
 Arguments:
 
