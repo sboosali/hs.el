@@ -379,7 +379,7 @@ See URL `https://pvp.haskell.org/'."
 
   "Get the version of the (available) ‹ghc› program."
 
-  (hs--run-ghc "--numeric-version"))
+  (hs--pvp-version-to-plist (hs--run-ghc "--numeric-version")))
 
 ;; ^ e.g.
 ;;
@@ -396,9 +396,7 @@ See URL `https://pvp.haskell.org/'."
 
   "Get the version of the (available) ‹cabal› program."
 
-  (hs--run-cabal "--numeric-version")
-
-)
+  (hs--pvp-version-to-plist (hs--run-cabal "--numeric-version")))
 
 ;; ^ e.g.
 ;;
